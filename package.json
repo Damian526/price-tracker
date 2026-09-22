@@ -1,0 +1,33 @@
+{
+  "name": "price-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "",
+  "main": "index.js",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+"scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "clean": "turbo clean"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Damian526/price-tracker.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Damian526/price-tracker/issues"
+  },
+  "homepage": "https://github.com/Damian526/price-tracker#readme",
+  "devDependencies": {
+    "turbo": "^2.11.3"
+  }
+}
