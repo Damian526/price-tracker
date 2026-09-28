@@ -3,9 +3,9 @@ import { Document, Types } from 'mongoose';
 
 @Schema()
 export class PriceSnapshot extends Document {
-  @Prop({ type: Types.ObjectId, required: true }) trackerId: Types.ObjectId;
-  @Prop({ required: true }) price: number;
-  @Prop({ required: true, default: Date.now }) scrapedAt: Date;
+  @Prop({ type: Types.ObjectId, required: true }) trackerId!: Types.ObjectId;
+  @Prop({ required: true }) price!: number;
+  @Prop({ default: Date.now }) scrapedAt!: Date;
 }
 
 export const PriceSnapshotSchema = SchemaFactory.createForClass(PriceSnapshot);
