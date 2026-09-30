@@ -3,7 +3,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cron } from '@nestjs/schedule';
 import { Model } from 'mongoose';
-import { Tracker } from 'src/schemas/tracker.schema';
+import { Tracker } from '../schemas/tracker.schema';
 
 @Injectable()
 export class CronService {

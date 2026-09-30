@@ -20,7 +20,7 @@ import { CronService } from './cron/cron.service';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGODB_URI') ?? '',
+        uri: configService.getOrThrow<string>('MONGODB_URI') ?? '',
       }),
       inject: [ConfigService],
     }),

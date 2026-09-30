@@ -2,8 +2,8 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { PriceSnapshot } from 'src/schemas/price-snapshot.schema';
-import { Tracker } from 'src/schemas/tracker.schema';
+import { PriceSnapshot } from '../schemas/price-snapshot.schema';
+import { Tracker } from '../schemas/tracker.schema';
 import { CreateTrackerDto } from './dto/create-tracker.dto';
 
 @Injectable()
