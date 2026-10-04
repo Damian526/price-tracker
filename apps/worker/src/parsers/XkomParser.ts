@@ -6,13 +6,18 @@ export class XkomParser implements StoreParser {
   matches(url: string): boolean {
     return url.includes('x-kom.pl');
   }
-  async parse(page: Page) {
-    // check actual site and found how to scrape page
 
-    const titleLocator = page.locator('h1'); // some example selector, change to real selector
-    const priceLocator = page.locator('div[class*="price"]');
+  async parse(page: Page) {
+    const titleLocator = page.locator('h1[data-name="productTitle"]');
+    const priceLocator = page.locator('div[data-name="productPrice"]').first();
+
+    await priceLocator.waitFor({ state: 'visible', timeout: 10000 });
+
     const title = await titleLocator.first().innerText();
     const priceText = await priceLocator.first().innerText();
+    console.log(`RAW TEXT: "${priceText}"`);
+
+    console.log(`RAW GRABBED TEXT: "${priceText}"`);
 
     return {
       title,
