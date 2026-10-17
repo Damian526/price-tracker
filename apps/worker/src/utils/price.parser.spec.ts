@@ -19,6 +19,22 @@ describe('Price Parser (Unit)', () => {
       expected: 1299.99,
       description: 'non-breaking space',
     },
+    { input: '499 zł', expected: 499, description: 'no grosze' },
+    {
+      input: 'Cena: 9 499,00 zł9 499',
+      expected: 9499,
+      description: 'label prefix and duplicated price',
+    },
+    {
+      input: '1.299,99 zł',
+      expected: 1299.99,
+      description: 'dot as thousands separator',
+    },
+    {
+      input: '1299,99 zł',
+      expected: 1299.99,
+      description: 'no thousands separator',
+    },
   ];
 
   testCases.forEach(({ input, expected, description }) => {
@@ -26,5 +42,11 @@ describe('Price Parser (Unit)', () => {
       const result = parsePolishPrice(input);
       expect(result).toBe(expected);
     });
+  });
+
+  it('should throw when the text contains no price', () => {
+    expect(() => parsePolishPrice('Produkt niedostępny')).toThrow(
+      'Cannot parse price from "Produkt niedostępny"',
+    );
   });
 });

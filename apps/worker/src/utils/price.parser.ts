@@ -1,14 +1,12 @@
-export function parsePolishPrice(priceText: string): number | null {
-  // Finds the first sequence of numbers, optional spaces, and a comma or dot
-  // e.g., from "Cena: 9 499,00 zł9 499..." it grabs "9 499,00"
-  const match = priceText.match(/(\d[\d\s]*[,.]\d{2})/);
+// e.g. "Cena: 9 499,00 zł" -> "9 499" and "00"
+const PRICE_PATTERN = /(\d{1,3}(?:[\s.]\d{3})+|\d+)(?:[,.](\d{2}))?/;
 
-  if (!match) return null;
+export function parsePolishPrice(priceText: string): number {
+  const match = priceText.match(PRICE_PATTERN);
 
-  const cleanedText = match[0]
-    .replace(/\s/g, '')
-    .replace(/\u00a0/g, '')
-    .replace(',', '.');
+  if (!match) throw new Error(`Cannot parse price from "${priceText}"`);
 
-  return parseFloat(cleanedText);
+  const [, integerPart, decimalPart = '00'] = match;
+
+  return parseFloat(`${integerPart.replace(/[\s.]/g, '')}.${decimalPart}`);
 }

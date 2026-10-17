@@ -1,0 +1,19 @@
+{
+  "name": "@price-tracker/database",
+  "version": "1.0.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/mongoose": "^11.0.4",
+    "@price-tracker/shared": "*",
+    "mongoose": "^9.11.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
