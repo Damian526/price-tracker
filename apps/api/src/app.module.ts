@@ -1,11 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Tracker, TrackerSchema } from './schemas/tracker.schema';
-import {
-  PriceSnapshot,
-  PriceSnapshotSchema,
-} from './schemas/price-snapshot.schema';
+import { Tracker, TrackerSchema } from '@price-tracker/database';
+import { PriceSnapshot, PriceSnapshotSchema } from '@price-tracker/database';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TrackersController } from './trackers/trackers.controller';

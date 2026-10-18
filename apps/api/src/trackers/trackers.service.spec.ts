@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { TrackersService } from './trackers.service';
-import { Tracker } from '../schemas/tracker.schema';
-import { PriceSnapshot } from '../schemas/price-snapshot.schema';
+import { Tracker } from '@price-tracker/database';
+import { PriceSnapshot } from '@price-tracker/database';
 
 describe('TrackersService (Unit)', () => {
   let service: TrackersService;

@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { HydratedDocument, Types } from "mongoose";
+import { Tracker } from "./tracker.schema";
 
 export type PriceSnapshotDocument = HydratedDocument<PriceSnapshot>;
 
@@ -15,7 +16,6 @@ export class PriceSnapshot {
   scrapedAt: Date;
 }
 
-import { Tracker } from "./tracker.schema";
 export const PriceSnapshotSchema = SchemaFactory.createForClass(PriceSnapshot);
 
 // Compound index for fast 30-day history chart queries
