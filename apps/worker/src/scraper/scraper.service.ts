@@ -3,6 +3,8 @@ import { XkomParser } from 'src/parsers/XkomParser';
 import {
   PriceSnapshot,
   PriceSnapshotDocument,
+  SearchSession,
+  SearchSessionDocument,
   Tracker,
   TrackerDocument,
 } from '@price-tracker/database';
@@ -22,6 +24,8 @@ export class ScraperService {
     private readonly trackerModel: Model<TrackerDocument>,
     @InjectModel(PriceSnapshot.name)
     private readonly snapshotModel: Model<PriceSnapshotDocument>,
+    @InjectModel(SearchSession.name)
+    private readonly searchSessionModel: Model<SearchSessionDocument>,
     private readonly mailService: MailService,
     private configService: ConfigService,
   ) {}
@@ -135,6 +139,75 @@ export class ScraperService {
       if (browser) {
         await browser.close();
         this.logger.debug(`Browser closed for tracker ${trackerId}`);
+      }
+    }
+  }
+  async processSearchJob(sessionId: string, query: string): Promise<void> {
+    if (!Types.ObjectId.isValid(sessionId)) {
+      this.logger.error(`Invalid sessionId received: ${sessionId}`);
+      return;
+    }
+
+    let browser: Browser | null = null;
+
+    try {
+      this.logger.log(`Starting search aggregator for: "${query}"`);
+
+      // 1. Launch Playwright safely
+      browser = await chromium.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+      });
+
+      const context = await browser.newContext({
+        userAgent:
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+      });
+      const page = await context.newPage();
+
+      // 2. Build the search URL and navigate
+      const searchUrl = this.xkomParser.getSearchUrl(query);
+      await page.goto(searchUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30000,
+      });
+
+      // 3. Extract the top 3 results using your parser
+      const searchResults = await this.xkomParser.parseSearchResults(page, 3);
+
+      // Add the store name to the results (since the shared interface expects it)
+      const formattedResults = searchResults.map((result) => ({
+        ...result,
+        store: 'x-kom.pl',
+        imageUrl: '', // Optional: update your parser to grab images later!
+      }));
+
+      // 4. Save results to MongoDB and mark session completed
+      await this.searchSessionModel.findByIdAndUpdate(sessionId, {
+        $set: {
+          status: 'completed',
+          results: formattedResults,
+        },
+      });
+
+      this.logger.log(
+        `✅ Search session ${sessionId} completed with ${formattedResults.length} results.`,
+      );
+    } catch (error) {
+      const errMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(
+        `❌ Search failed for session ${sessionId}: ${errMessage}`,
+      );
+
+      // Mark session as failed so the frontend stops polling
+      await this.searchSessionModel.findByIdAndUpdate(sessionId, {
+        $set: { status: 'failed' },
+      });
+    } finally {
+      // 5. CRITICAL: Close the browser to free RAM
+      if (browser) {
+        await browser.close();
       }
     }
   }

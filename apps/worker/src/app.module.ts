@@ -5,6 +5,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import {
   PriceSnapshot,
   PriceSnapshotSchema,
+  SearchSession,
+  SearchSessionSchema,
   Tracker,
   TrackerSchema,
 } from '@price-tracker/database';
@@ -25,6 +27,7 @@ import { MailService } from './mail/mail.service';
     MongooseModule.forFeature([
       { name: Tracker.name, schema: TrackerSchema },
       { name: PriceSnapshot.name, schema: PriceSnapshotSchema },
+      { name: SearchSession.name, schema: SearchSessionSchema },
     ]),
   ],
   controllers: [ScraperController],

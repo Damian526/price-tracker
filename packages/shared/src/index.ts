@@ -10,6 +10,11 @@ export interface ScrapeJobPayload {
   url?: string;
 }
 
+export interface SearchJobPayload {
+  sessionId: string;
+  query: string;
+}
+
 // domain status types
 export type TrackerStatus = "pending" | "ok" | "failed";
 export type SearchSessionStatus = "pending" | "completed" | "failed";

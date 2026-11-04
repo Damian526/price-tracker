@@ -8,6 +8,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TrackersController } from './trackers/trackers.controller';
 import { TrackersService } from './trackers/trackers.service';
 import { CronService } from './cron/cron.service';
+import { MessagingModule } from './messaging/messaging.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { CronService } from './cron/cron.service';
       { name: Tracker.name, schema: TrackerSchema },
       { name: PriceSnapshot.name, schema: PriceSnapshotSchema },
     ]),
+    MessagingModule,
     ScheduleModule.forRoot(),
     ClientsModule.registerAsync([
       {
@@ -35,7 +37,7 @@ import { CronService } from './cron/cron.service';
           options: {
             urls: [configService.getOrThrow<string>('RABBITMQ_URL')],
             queue: 'scrape',
-            queueOptions: { durable: true }, // durable queue ensures jobs survive server restarts
+            queueOptions: { durable: true },
           },
         }),
         inject: [ConfigService],
