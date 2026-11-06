@@ -68,5 +68,17 @@ describe('XkomParser (fixture)', () => {
         expect(url).not.toContain('?');
       }
     });
+
+    // Regression: x-kom shows "Nie znaleźliśmy wyników" plus recommended
+    // product cards. Those are not search results and must be ignored.
+    it('returns an empty list on the "no results" page', async () => {
+      const noResultsHtml = readFileSync(
+        join(__dirname, '__fixtures__', 'xkom-no-results.html'),
+        'utf8',
+      );
+      await page.setContent(noResultsHtml);
+
+      expect(await parser.parseSearchResults(page)).toEqual([]);
+    });
   });
 });

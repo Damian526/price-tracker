@@ -3,7 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { SearchSession, SearchSessionSchema } from '@price-tracker/database';
 import { SearchController } from './search.controller';
 import { SearchService } from './search.service';
-import { MessagingModule } from 'src/messaging/messaging.module';
+import { MessagingModule } from '../messaging/messaging.module';
 
 @Module({
   imports: [

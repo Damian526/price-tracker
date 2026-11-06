@@ -1,16 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/mongoose';
-import { SearchSessionDocument } from '@price-tracker/database';
+import { SearchSession, SearchSessionDocument } from '@price-tracker/database';
 import { Model } from 'mongoose';
 import { RABBITMQ_PATTERNS, SearchJobPayload } from '@price-tracker/shared';
 
 @Injectable()
 export class SearchService {
   constructor(
-    @InjectModel(SearchService.name)
+    @InjectModel(SearchSession.name)
     private searchSessionModel: Model<SearchSessionDocument>,
-    @Inject('RABBITMQ_SERVICE') private rabbitClient: ClientProxy,
+    @Inject('SCRAPE_SERVICE') private rabbitClient: ClientProxy,
   ) {}
   async initiateSearch(query: string) {
     const session = await this.searchSessionModel.create({

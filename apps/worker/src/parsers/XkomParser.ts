@@ -21,7 +21,15 @@ export class XkomParser implements StoreParser {
 
   async parseSearchResults(page: Page, limit = 3): Promise<SearchResult[]> {
     const cards = page.locator('[data-name="productCard"]');
-    await cards.first().waitFor({ state: 'attached', timeout: 10000 });
+    const noResults = page.getByText('Nie znaleźliśmy wyników');
+
+    await cards
+      .first()
+      .or(noResults.first())
+      .first()
+      .waitFor({ state: 'attached', timeout: 10000 });
+
+    if ((await noResults.count()) > 0) return [];
 
     const count = Math.min(await cards.count(), limit);
     const results: SearchResult[] = [];

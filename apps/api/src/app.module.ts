@@ -9,6 +9,7 @@ import { TrackersController } from './trackers/trackers.controller';
 import { TrackersService } from './trackers/trackers.service';
 import { CronService } from './cron/cron.service';
 import { MessagingModule } from './messaging/messaging.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { MessagingModule } from './messaging/messaging.module';
       { name: PriceSnapshot.name, schema: PriceSnapshotSchema },
     ]),
     MessagingModule,
+    SearchModule,
     ScheduleModule.forRoot(),
     ClientsModule.registerAsync([
       {
