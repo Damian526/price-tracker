@@ -4,11 +4,17 @@ import type { ISearchResultItem, SearchSessionStatus } from '@price-tracker/shar
 
 // 1. Setup Environment & State
 const config = useRuntimeConfig()
+const toast = useToast()
 const query = ref('')
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 const results = ref<ISearchResultItem[]>([])
 const currentStatus = ref<SearchSessionStatus | null>(null)
+
+const isModalOpen = ref(false)
+const selectedProduct = ref<ISearchResultItem | null>(null)
+const targetPrice = ref<number | undefined>(undefined)
+const isSubmitting = ref(false)
 
 const handleSearch = async () => {
   if (!query.value.trim()) return
@@ -60,6 +66,45 @@ const pollForResults = (sessionId: string) => {
       isLoading.value = false
     }
   }, 2000) // Ask the API every 2,000 milliseconds (2 seconds)
+}
+
+const openTrackModal = (product: ISearchResultItem) => {
+  selectedProduct.value = product
+  targetPrice.value = product.price // Pre-fill with the current price as a baseline
+  isModalOpen.value = true
+}
+
+const submitTracker = async () => {
+  if (!selectedProduct.value || !targetPrice.value) return
+
+  isSubmitting.value = true
+
+  try {
+    await $fetch(`${config.public.apiBase}/trackers`, {
+      method: 'POST',
+      body: {
+        url: selectedProduct.value.url,
+        targetPrice: targetPrice.value,
+      }
+    })
+
+    // Close modal, reset input, and show success message
+    isModalOpen.value = false
+    toast.add({
+      title: 'Tracker Added!',
+      description: `We are now monitoring ${selectedProduct.value.title}`,
+      color: 'success'
+    })
+} catch (err) {
+    toast.add({
+      title: 'Error adding tracker',
+      description: 'Could not connect to the API. Is it running?',
+      icon: 'i-heroicons-exclamation-circle', // Add a clear icon
+      color: 'primary' // Use primary instead of red so Dark Mode renders it correctly
+    })
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 
@@ -121,14 +166,60 @@ const pollForResults = (sessionId: string) => {
             </h3>
           </div>
           
-          <div class="flex items-end justify-between">
+<div class="flex items-end justify-between mt-4">
             <span class="text-2xl font-bold text-primary">{{ item.price.toFixed(2) }} PLN</span>
-            <UButton :to="item.url" target="_blank" color="primary" variant="ghost" icon="i-heroicons-arrow-top-right-on-square">
-              View
-            </UButton>
+            
+            <div class="flex gap-2">
+              <UButton :to="item.url" target="_blank" color="primary" variant="ghost" icon="i-heroicons-arrow-top-right-on-square" />
+              <!-- NEW: The Track Button -->
+              <UButton color="primary" icon="i-heroicons-bell-alert" @click="openTrackModal(item)">
+                Track Price
+              </UButton>
+            </div>
           </div>
         </div>
       </UCard>
     </div>
+<UModal v-model:open="isModalOpen">
+      <template #content>
+      <UCard>
+        <template #header>
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">
+              Create Price Alert
+            </h3>
+            <UButton color="info" variant="ghost" icon="i-heroicons-x-mark-20-solid" class="-my-1" @click="isModalOpen = false" />
+          </div>
+        </template>
+
+        <!-- Form Content -->
+        <form @submit.prevent="submitTracker" class="space-y-4">
+          <p class="text-sm text-gray-500">
+            You are tracking: <strong class="text-gray-900 dark:text-white">{{ selectedProduct?.title }}</strong>
+          </p>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Target Price (PLN)</label>
+            <!-- v-model.number forces Vue to treat the input as a Number, not a String -->
+            <UInput 
+              v-model.number="targetPrice" 
+              type="number" 
+              size="lg"
+              placeholder="e.g. 2500" 
+              :disabled="isSubmitting"
+              required
+            />
+            <p class="text-xs text-gray-500 mt-1">We will email you when the price drops to or below this amount.</p>
+          </div>
+
+          <div class="flex justify-end gap-3 mt-6">
+            <UButton color="info" variant="soft" @click="isModalOpen = false">Cancel</UButton>
+            <UButton type="submit" color="primary" :loading="isSubmitting">Save Tracker</UButton>
+          </div>
+        </form>
+      </UCard>
+      </template>
+    </UModal>
+
   </div>
 </template>

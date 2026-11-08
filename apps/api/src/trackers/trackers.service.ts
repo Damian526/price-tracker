@@ -2,16 +2,20 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { PriceSnapshot } from '@price-tracker/database';
+import {
+  PriceSnapshot,
+  PriceSnapshotDocument,
+  TrackerDocument,
+} from '@price-tracker/database';
 import { Tracker } from '@price-tracker/database';
 import { CreateTrackerDto } from './dto/create-tracker.dto';
 
 @Injectable()
 export class TrackersService {
   constructor(
-    @InjectModel(Tracker.name) private trackerModel: Model<Tracker>,
+    @InjectModel(Tracker.name) private trackerModel: Model<TrackerDocument>,
     @InjectModel(PriceSnapshot.name)
-    private snapshotModel: Model<PriceSnapshot>,
+    private snapshotModel: Model<PriceSnapshotDocument>,
     @Inject('SCRAPE_SERVICE') private rabbitClient: ClientProxy,
   ) {}
 
@@ -54,5 +58,13 @@ export class TrackersService {
       })
       .sort({ scrapedAt: 1 })
       .exec();
+  }
+  async remove(trackerId: string) {
+    const tracker = await this.trackerModel.findByIdAndDelete(trackerId);
+    if (!tracker) {
+      throw new NotFoundException(`Tracker ${trackerId} not found`);
+    }
+    await this.snapshotModel.deleteMany({ trackerId });
+    return { success: true };
   }
 }

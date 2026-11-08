@@ -18,5 +18,6 @@
     <main class="py-8">
       <NuxtPage />
     </main>
+    <UNotifications />
   </div>
 </template>

@@ -1,9 +1,43 @@
 <script setup lang="ts">
-const config = useRuntimeConfig()
+import type { IPriceSnapshot, ITracker } from '@price-tracker/shared'
 
+const config = useRuntimeConfig()
+const toast = useToast()
 // 2. Fetch the trackers from the NestJS backend
 // We expect an array of objects matching the ITracker interface from  shared package
-const { data: trackers, pending, error } = useFetch(`${config.public.apiBase}/trackers`)
+const { data: trackers, pending, error, execute: refreshTrackers } = useFetch(`${config.public.apiBase}/trackers`)
+
+const isChartOpen = ref(false)
+const selectedTracker = ref<ITracker | null>(null)
+const historyData = ref<IPriceSnapshot[]>([])
+const isLoadingHistory = ref(false)
+
+const deleteTracker = async (id: string | undefined) => {
+  if (!id) return
+  if (!confirm('Are you sure you want to delete this tracker?')) return
+
+  try {
+    await $fetch(`${config.public.apiBase}/trackers/${id}`, { method: 'DELETE' })
+    toast.add({ title: 'Tracker deleted', color: 'primary', icon: 'i-heroicons-trash' })
+    refreshTrackers() // Reload the grid
+  } catch (err) {
+    toast.add({ title: 'Failed to delete tracker', color: 'error', icon: 'i-heroicons-exclamation-circle' })
+  }
+}
+const openChart = async (tracker: ITracker) => {
+  selectedTracker.value = tracker
+  isChartOpen.value = true
+  isLoadingHistory.value = true
+
+  try {
+    // Fetch the history array from your new API endpoint
+    historyData.value = await $fetch<IPriceSnapshot[]>(`${config.public.apiBase}/trackers/${tracker._id}/history`)
+  } catch (err) {
+    toast.add({ title: 'Could not load history', color: 'error' })
+  } finally {
+    isLoadingHistory.value = false
+  }
+}
 </script>
 
 <template>
@@ -76,18 +110,50 @@ const { data: trackers, pending, error } = useFetch(`${config.public.apiBase}/tr
             </div>
           </div>
 
-          <!-- Bottom Actions -->
-          <div class="flex justify-between items-center pt-2">
-            <p class="text-xs text-gray-400">
-              Checked: {{ tracker.lastCheckedAt ? new Date(tracker.lastCheckedAt).toLocaleDateString('pl-PL', { timeZone: 'Europe/Warsaw' }) : 'Never' }}
-            </p>
-            <UButton :to="tracker.url" target="_blank" color="primary" variant="ghost" size="sm">
-              Visit Store
+<!-- Bottom Actions -->
+          <div class="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-800">
+            <UButton :to="tracker.url" target="_blank" color="info" variant="ghost" size="sm" icon="i-heroicons-arrow-top-right-on-square">
+              Store
             </UButton>
+            
+            <div class="flex gap-2">
+              <UButton color="primary" variant="soft" size="sm" icon="i-heroicons-chart-bar" @click="openChart(tracker)">
+                History
+              </UButton>
+              <UButton color="error" variant="ghost" size="sm" icon="i-heroicons-trash" @click="deleteTracker(tracker._id)" />
+            </div>
           </div>
         </div>
-
       </UCard>
     </div>
+
+    <!-- modal with chart -->
+    <UModal v-model:open="isChartOpen">
+      <template #content>
+        <UCard>
+          <template #header>
+            <div class="flex items-center justify-between">
+              <h3 class="text-base font-semibold text-gray-900 dark:text-white line-clamp-1">
+                Price History: {{ selectedTracker?.title }}
+              </h3>
+              <UButton color="info" variant="ghost" icon="i-heroicons-x-mark-20-solid" class="-my-1" @click="isChartOpen = false" />
+            </div>
+          </template>
+
+          <div v-if="isLoadingHistory" class="flex justify-center py-12">
+            <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-primary" />
+          </div>
+          
+          <div v-else>
+            <!-- Render the Chart Component -->
+            <PriceChart 
+              :snapshots="historyData" 
+              :currency="selectedTracker?.currency || 'PLN'" 
+            />
+          </div>
+        </UCard>
+      </template>
+    </UModal>
+
   </UContainer>
 </template>

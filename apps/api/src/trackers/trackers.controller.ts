@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { TrackersService } from './trackers.service';
 import { CreateTrackerDto } from './dto/create-tracker.dto';
 
@@ -23,5 +31,9 @@ export class TrackersController {
   @Get(':id/history')
   getHistory(@Param('id') id: string, @Query('days') days: string) {
     return this.trackersService.getHistory(id, days ? parseInt(days) : 30);
+  }
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.trackersService.remove(id);
   }
 }
