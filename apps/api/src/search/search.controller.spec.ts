@@ -26,14 +26,14 @@ describe('SearchController (Unit)', () => {
 
   it('should pass the query from the body to initiateSearch', async () => {
     // Arrange
-    mockSearchService.initiateSearch.mockResolvedValue({ session: 'abc' });
+    mockSearchService.initiateSearch.mockResolvedValue({ sessionId: 'abc' });
 
     // Act
     const result = await controller.search('laptop');
 
     // Assert
     expect(mockSearchService.initiateSearch).toHaveBeenCalledWith('laptop');
-    expect(result).toEqual({ session: 'abc' });
+    expect(result).toEqual({ sessionId: 'abc' });
   });
 
   it('should pass the id from the url to getSearchSession', async () => {

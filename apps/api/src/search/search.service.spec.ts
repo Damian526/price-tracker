@@ -60,7 +60,7 @@ describe('SearchService (Unit)', () => {
       const result = await service.initiateSearch('laptop');
 
       // Assert
-      expect(result).toEqual({ session: 'fake-session-id' });
+      expect(result).toEqual({ sessionId: 'fake-session-id' });
     });
   });
 

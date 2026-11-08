@@ -23,7 +23,7 @@ export class SearchService {
       query,
     };
     this.rabbitClient.emit(RABBITMQ_PATTERNS.SEARCH_AGGREGATOR_JOB, payload);
-    return { session: session._id };
+    return { sessionId: session._id.toString() };
   }
 
   async getSearchSession(sessionId: string) {

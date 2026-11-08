@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Nuxt auto-imports components, so you don't need an explicit import for SearchAggregator!
+// Nuxt auto-imports components, so you don't need an explicit import for SearchAggregator
 useHead({
   title: 'Price Tracker & Aggregator',
   meta: [
@@ -10,7 +10,6 @@ useHead({
 
 <template>
   <UContainer class="py-16 space-y-12">
-    <!-- Header -->
     <div class="text-center max-w-2xl mx-auto space-y-4">
       <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
         Find the best tech prices.
@@ -20,7 +19,6 @@ useHead({
       </p>
     </div>
 
-    <!-- The Component we just built -->
     <SearchAggregator />
   </UContainer>
 </template>

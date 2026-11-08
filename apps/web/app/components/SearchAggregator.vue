@@ -17,7 +17,7 @@ const handleSearch = async () => {
   error.value = null
   results.value = []
   currentStatus.value = 'pending'
-
+console.log(config.public.apiBase)
   try {
     // Step A: Send the initial request to the NestJS API
     const sessionResponse = await $fetch<{ sessionId: string }>(`${config.public.apiBase}/search`, {
@@ -36,6 +36,7 @@ const handleSearch = async () => {
 const pollForResults = (sessionId: string) => {
   const pollInterval = setInterval(async () => {
     try {
+      console.log(sessionId)
       // Fetch the latest session state from MongoDB
       const session = await $fetch<{ status: SearchSessionStatus, results: ISearchResultItem[] }>(
         `${config.public.apiBase}/search/${sessionId}`
