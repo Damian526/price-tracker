@@ -8,6 +8,7 @@ export interface SearchResult {
   title: string;
   price: number;
   url: string;
+  imageUrl: string;
 }
 
 export class XkomParser implements StoreParser {
@@ -46,6 +47,9 @@ export class XkomParser implements StoreParser {
         .first()
         .getAttribute('href');
 
+      const imgLocator = card.locator('img').first();
+      const imageUrl = (await imgLocator.getAttribute('src')) || '';
+
       if (!href) continue;
 
       // Drop tracking params (?cid=...&eid=...) so the URL is stable
@@ -56,6 +60,7 @@ export class XkomParser implements StoreParser {
         title,
         price: parsePolishPrice(priceText),
         url: url.toString(),
+        imageUrl,
       });
     }
 
@@ -65,6 +70,9 @@ export class XkomParser implements StoreParser {
   async parse(page: Page) {
     const titleLocator = page.locator('h1[data-name="productTitle"]');
     const priceLocator = page.locator('div[data-name="productPrice"]').first();
+    const imageLocator = page
+      .locator('img[data-cy="gallery_main_img"]')
+      .first();
 
     await priceLocator.waitFor({ state: 'visible', timeout: 10000 });
 
@@ -74,9 +82,17 @@ export class XkomParser implements StoreParser {
 
     console.log(`RAW GRABBED TEXT: "${priceText}"`);
 
+    let imageUrl = '';
+    try {
+      imageUrl = (await imageLocator.getAttribute('src')) || '';
+    } catch (e) {
+      console.warn('Could not find main product image');
+    }
+
     return {
       title,
       price: parsePolishPrice(priceText),
+      imageUrl,
     };
   }
 }

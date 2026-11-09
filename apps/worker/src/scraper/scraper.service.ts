@@ -67,7 +67,11 @@ export class ScraperService {
       });
 
       // Extract data
-      const { price: scrapedPrice, title } = await this.xkomParser.parse(page);
+      const {
+        price: scrapedPrice,
+        title,
+        imageUrl,
+      } = await this.xkomParser.parse(page);
 
       if (
         scrapedPrice === null ||
@@ -87,6 +91,9 @@ export class ScraperService {
 
       if (title !== '') {
         tracker.title = title;
+      }
+      if (imageUrl) {
+        tracker.imageUrl = imageUrl;
       }
 
       const isBelowOrEqualTarget = scrapedPrice <= tracker.targetPrice;
@@ -179,7 +186,6 @@ export class ScraperService {
       const formattedResults = searchResults.map((result) => ({
         ...result,
         store: 'x-kom.pl',
-        imageUrl: '', // Optional: update your parser to grab images later!
       }));
 
       // 4. Save results to MongoDB and mark session completed

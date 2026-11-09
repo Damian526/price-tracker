@@ -88,6 +88,11 @@ const openChart = async (tracker: ITracker) => {
           </UBadge>
         </div>
 
+        <!-- Product Image -->
+        <div v-if="tracker.imageUrl" class="h-40 w-full bg-white flex items-center justify-center p-2 rounded-lg mb-4">
+          <img :src="tracker.imageUrl" :alt="tracker.title" class="max-h-full object-contain" />
+        </div>
+
         <!-- Product Title -->
         <h3 class="font-semibold text-gray-900 line-clamp-2 mb-6" :title="tracker.title || tracker.url">
           {{ tracker.title || 'Unknown Product (Waiting for first scrape)' }}

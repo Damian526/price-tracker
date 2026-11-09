@@ -25,7 +25,7 @@ const props = defineProps<{
 const chartData = computed(() => {
   return {
     // X-Axis: Format dates like "Oct 24, 14:30"
-    labels: props.snapshots.map(s => {
+    labels: props.snapshots.map((s) => {
       const date = new Date(s.scrapedAt)
       return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
     }),
