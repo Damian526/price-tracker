@@ -18,6 +18,12 @@ export class TrackersController {
   create(@Body() createTrackerDto: CreateTrackerDto) {
     return this.trackersService.create(createTrackerDto);
   }
+
+  @Post(':id/check')
+  triggerCheck(@Param('id') id: string) {
+    return this.trackersService.triggerManualScrape(id);
+  }
+
   @Get()
   findAll() {
     return this.trackersService.findAll();

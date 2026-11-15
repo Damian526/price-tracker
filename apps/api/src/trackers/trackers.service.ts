@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import {
   PriceSnapshot,
   PriceSnapshotDocument,
@@ -9,6 +9,7 @@ import {
 } from '@price-tracker/database';
 import { Tracker } from '@price-tracker/database';
 import { CreateTrackerDto } from './dto/create-tracker.dto';
+import { RABBITMQ_PATTERNS, ScrapeJobPayload } from '@price-tracker/shared';
 
 @Injectable()
 export class TrackersService {
@@ -20,33 +21,48 @@ export class TrackersService {
   ) {}
 
   async create(createTrackerDto: CreateTrackerDto) {
-    const urlObj = new URL(createTrackerDto.url);
-    const store = urlObj.hostname.replace('www.', '');
-    const tracker = new this.trackerModel({
-      url: createTrackerDto.url,
-      targetPrice: createTrackerDto.targetPrice,
-      store: store,
-    });
-    const savedTracker = await tracker.save();
+    // Extract domain name automatically (e.g., "https://www.x-kom.pl/..." -> "x-kom.pl")
+    const parsedUrl = new URL(createTrackerDto.url);
+    const store = parsedUrl.hostname.replace(/^www\./, '');
 
-    // Immediately push a job to RabbitMQ so it gets scraped right away
-    this.rabbitClient.emit('scrape_job', {
-      trackerId: savedTracker._id,
-      url: savedTracker.url,
-      targetPrice: savedTracker.targetPrice,
+    const tracker = await this.trackerModel.create({
+      ...createTrackerDto,
+      store,
+      lastStatus: 'pending',
     });
 
-    return savedTracker;
+    // Immediately queue a scrape job so the user doesn't wait 2 hours!
+    const payload: ScrapeJobPayload = { trackerId: tracker._id.toString() };
+    this.rabbitClient.emit(RABBITMQ_PATTERNS.SCRAPE_JOB, payload);
+
+    return tracker;
   }
+
+  async triggerManualScrape(id: string) {
+    const tracker = await this.findOne(id);
+    tracker.lastStatus = 'pending';
+    await tracker.save();
+
+    const payload: ScrapeJobPayload = { trackerId: tracker._id.toString() };
+    this.rabbitClient.emit(RABBITMQ_PATTERNS.SCRAPE_JOB, payload);
+
+    return { queued: true, trackerId: tracker._id };
+  }
+
   async findAll(): Promise<Tracker[]> {
     return this.trackerModel.find().exec();
   }
 
   async findOne(id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new NotFoundException(`Invalid tracker ID`);
+    }
+
     const tracker = await this.trackerModel.findById(id).exec();
     if (!tracker) throw new NotFoundException('Tracker not found');
     return tracker;
   }
+
   async getHistory(id: string, days: number = 30) {
     const dateLimit = new Date();
     dateLimit.setDate(dateLimit.getDate() - days);
