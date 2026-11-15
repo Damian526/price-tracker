@@ -6,6 +6,15 @@ import { getDefaultAttributes } from 'eslint-plugin-better-tailwindcss/api/defau
 export default withNuxt(
   betterTailwindcss.configs['correctness-error'],
   {
+    // Pin the TS project root so editors running ESLint from the monorepo
+    // root don't see several candidate tsconfig directories.
+    languageOptions: {
+      parserOptions: {
+        tsconfigRootDir: import.meta.dirname
+      }
+    }
+  },
+  {
     settings: {
       'better-tailwindcss': {
         entryPoint: 'app/assets/css/main.css',

@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import request from 'supertest';
+import type { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 
 describe('TrackersController (e2e)', () => {
@@ -27,25 +28,28 @@ describe('TrackersController (e2e)', () => {
   });
 
   it('POST /trackers - should reject invalid data (DTO Validation)', () => {
-    return request(app.getHttpServer())
+    return request(app.getHttpServer() as App)
       .post('/trackers')
       .send({ url: 'not-a-url', targetPrice: -50 }) // Invalid data
       .expect(400) // Expect a 400 Bad Request error
       .expect((res) => {
-        expect(res.body.message).toContain('Must be a valid URL');
+        expect((res.body as { message: string[] }).message).toContain(
+          'Must be a valid URL',
+        );
       });
   });
 
   it('POST /trackers - should successfully create a tracker', () => {
-    return request(app.getHttpServer())
+    return request(app.getHttpServer() as App)
       .post('/trackers')
       .send({ url: 'https://allegro.pl/oferta/123', targetPrice: 150 })
       .expect(201) // 201 Created
       .expect((res) => {
         // Assert the database actually returned a saved document
-        expect(res.body).toHaveProperty('_id');
-        expect(res.body.store).toBe('allegro.pl');
-        expect(res.body.targetPrice).toBe(150);
+        const body = res.body as { store: string; targetPrice: number };
+        expect(body).toHaveProperty('_id');
+        expect(body.store).toBe('allegro.pl');
+        expect(body.targetPrice).toBe(150);
       });
   });
 });

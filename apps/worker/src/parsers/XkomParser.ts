@@ -85,7 +85,7 @@ export class XkomParser implements StoreParser {
     let imageUrl = '';
     try {
       imageUrl = (await imageLocator.getAttribute('src')) || '';
-    } catch (e) {
+    } catch {
       console.warn('Could not find main product image');
     }
 

@@ -23,7 +23,7 @@ const handleSearch = async () => {
   error.value = null
   results.value = []
   currentStatus.value = 'pending'
-console.log(config.public.apiBase)
+  console.log(config.public.apiBase)
   try {
     // Step A: Send the initial request to the NestJS API
     const sessionResponse = await $fetch<{ sessionId: string }>(`${config.public.apiBase}/search`, {
@@ -33,7 +33,7 @@ console.log(config.public.apiBase)
 
     // Step B: Start polling the database to see if the worker finished
     pollForResults(sessionResponse.sessionId)
-  } catch (err) {
+  } catch {
     error.value = 'Failed to connect to the server. Is the API running?'
     isLoading.value = false
   }
@@ -60,7 +60,7 @@ const pollForResults = (sessionId: string) => {
         isLoading.value = false
       }
       // If status is still 'pending', the interval just runs again in 2 seconds.
-    } catch (err) {
+    } catch {
       clearInterval(pollInterval)
       error.value = 'Lost connection while waiting for results.'
       isLoading.value = false
@@ -84,7 +84,7 @@ const submitTracker = async () => {
       method: 'POST',
       body: {
         url: selectedProduct.value.url,
-        targetPrice: targetPrice.value,
+        targetPrice: targetPrice.value
       }
     })
 
@@ -95,12 +95,12 @@ const submitTracker = async () => {
       description: `We are now monitoring ${selectedProduct.value.title}`,
       color: 'success'
     })
-} catch (err) {
+  } catch {
     toast.add({
       title: 'Error adding tracker',
       description: 'Could not connect to the API. Is it running?',
-      icon: 'i-heroicons-exclamation-circle', // Add a clear icon
-      color: 'primary' // Use primary instead of red so Dark Mode renders it correctly
+      icon: 'i-heroicons-exclamation-circle',
+      color: 'error'
     })
   } finally {
     isSubmitting.value = false
@@ -110,69 +110,120 @@ const submitTracker = async () => {
 
 <template>
   <div class="max-w-4xl mx-auto w-full space-y-8">
-    <form @submit.prevent="handleSearch" class="flex gap-4 items-center">
+    <form
+      class="flex gap-4 items-center"
+      @submit.prevent="handleSearch"
+    >
       <UInput
         v-model="query"
         icon="i-heroicons-magnifying-glass-20-solid"
         size="lg"
-        color="primary"
         variant="outline"
         placeholder="Search for a product (e.g., iPhone 15)..."
         class="flex-1"
         :disabled="isLoading"
       />
-      <UButton 
-        type="submit" 
-        size="lg" 
-        color="primary" 
+      <UButton
+        type="submit"
+        size="lg"
+        color="primary"
         :loading="isLoading"
       >
         Search
       </UButton>
     </form>
 
-    <UAlert 
-      v-if="error" 
-      icon="i-heroicons-exclamation-triangle" 
-      color="error" 
-      variant="soft" 
-      :title="error" 
+    <UAlert
+      v-if="error"
+      icon="i-heroicons-exclamation-triangle"
+      color="error"
+      variant="soft"
+      :title="error"
     />
-    
-    <div v-else-if="isLoading" class="text-center text-gray-500 py-12 flex flex-col items-center gap-4">
-      <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-primary" />
+
+    <div
+      v-else-if="isLoading"
+      class="text-center text-muted py-12 flex flex-col items-center gap-4"
+    >
+      <UIcon
+        name="i-heroicons-arrow-path"
+        class="w-8 h-8 animate-spin text-primary"
+      />
       <p>Scraping stores live... This usually takes 5-10 seconds.</p>
     </div>
 
     <!-- 3. Empty State (Finished but no results) -->
-    <div v-else-if="currentStatus === 'completed' && results.length === 0" class="text-center py-12">
-      <UIcon name="i-heroicons-magnifying-glass" class="w-12 h-12 text-gray-400 mb-4" />
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white">No products found</h3>
-      <p class="text-gray-500">We couldn't find any results for "{{ query }}". Try a different term.</p>
+    <div
+      v-else-if="currentStatus === 'completed' && results.length === 0"
+      class="text-center py-12"
+    >
+      <UIcon
+        name="i-heroicons-magnifying-glass"
+        class="w-12 h-12 text-dimmed mb-4"
+      />
+      <h3 class="text-lg font-medium text-highlighted">
+        No products found
+      </h3>
+      <p class="text-muted">
+        We couldn't find any results for "{{ query }}". Try a different term.
+      </p>
     </div>
 
-    <div v-else-if="results.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-      <UCard v-for="(item, index) in results" :key="index" class="flex flex-col h-full hover:ring-2 ring-primary transition-all">
+    <div
+      v-else-if="results.length > 0"
+      class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
+    >
+      <UCard
+        v-for="(item, index) in results"
+        :key="index"
+        class="flex flex-col h-full hover:ring-2 hover:ring-primary transition-all"
+      >
         <!-- maybe add image in parser -->
-        <div v-if="item.imageUrl" class="h-48 w-full bg-white flex items-center justify-center p-4 rounded-t-lg">
-          <img :src="item.imageUrl" :alt="item.title" class="max-h-full object-contain" />
+        <div
+          v-if="item.imageUrl"
+          class="h-48 w-full bg-white flex items-center justify-center p-4 rounded-t-lg"
+        >
+          <img
+            :src="item.imageUrl"
+            :alt="item.title"
+            class="max-h-full object-contain"
+          >
         </div>
-        
+
         <div class="flex-1 flex flex-col justify-between space-y-4">
           <div>
-            <UBadge color="primary" variant="soft" class="mb-2">{{ item.store }}</UBadge>
-            <h3 class="font-semibold text-gray-900 dark:text-white line-clamp-2" :title="item.title">
+            <UBadge
+              color="neutral"
+              variant="soft"
+              class="mb-2"
+            >
+              {{ item.store }}
+            </UBadge>
+            <h3
+              class="font-semibold text-highlighted line-clamp-2"
+              :title="item.title"
+            >
               {{ item.title }}
             </h3>
           </div>
-          
-<div class="flex items-end justify-between mt-4">
+
+          <div class="flex items-end justify-between mt-4">
             <span class="text-2xl font-bold text-primary">{{ item.price.toFixed(2) }} PLN</span>
-            
+
             <div class="flex gap-2">
-              <UButton :to="item.url" target="_blank" color="primary" variant="ghost" icon="i-heroicons-arrow-top-right-on-square" />
+              <UButton
+                :to="item.url"
+                target="_blank"
+                color="neutral"
+                variant="ghost"
+                icon="i-heroicons-arrow-top-right-on-square"
+              />
               <!-- NEW: The Track Button -->
-              <UButton color="primary" icon="i-heroicons-bell-alert" @click="openTrackModal(item)">
+              <UButton
+                color="primary"
+                icon="i-heroicons-bell-alert"
+                @click="openTrackModal(item)"
+              >
                 Track Price
               </UButton>
             </div>
@@ -180,46 +231,68 @@ const submitTracker = async () => {
         </div>
       </UCard>
     </div>
-<UModal v-model:open="isModalOpen">
+    <UModal v-model:open="isModalOpen">
       <template #content>
-      <UCard>
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">
-              Create Price Alert
-            </h3>
-            <UButton color="info" variant="ghost" icon="i-heroicons-x-mark-20-solid" class="-my-1" @click="isModalOpen = false" />
-          </div>
-        </template>
+        <UCard>
+          <template #header>
+            <div class="flex items-center justify-between">
+              <h3 class="text-base font-semibold leading-6 text-highlighted">
+                Create Price Alert
+              </h3>
+              <UButton
+                color="neutral"
+                variant="ghost"
+                icon="i-heroicons-x-mark-20-solid"
+                class="-my-1"
+                @click="isModalOpen = false"
+              />
+            </div>
+          </template>
 
-        <!-- Form Content -->
-        <form @submit.prevent="submitTracker" class="space-y-4">
-          <p class="text-sm text-gray-500">
-            You are tracking: <strong class="text-gray-900 dark:text-white">{{ selectedProduct?.title }}</strong>
-          </p>
-          
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Target Price (PLN)</label>
-            <!-- v-model.number forces Vue to treat the input as a Number, not a String -->
-            <UInput 
-              v-model.number="targetPrice" 
-              type="number" 
-              size="lg"
-              placeholder="e.g. 2500" 
-              :disabled="isSubmitting"
-              required
-            />
-            <p class="text-xs text-gray-500 mt-1">We will email you when the price drops to or below this amount.</p>
-          </div>
+          <!-- Form Content -->
+          <form
+            class="space-y-4"
+            @submit.prevent="submitTracker"
+          >
+            <p class="text-sm text-muted">
+              You are tracking: <strong class="text-highlighted">{{ selectedProduct?.title }}</strong>
+            </p>
 
-          <div class="flex justify-end gap-3 mt-6">
-            <UButton color="info" variant="soft" @click="isModalOpen = false">Cancel</UButton>
-            <UButton type="submit" color="primary" :loading="isSubmitting">Save Tracker</UButton>
-          </div>
-        </form>
-      </UCard>
+            <div>
+              <label class="block text-sm font-medium text-default mb-1">Target Price (PLN)</label>
+              <!-- v-model.number forces Vue to treat the input as a Number, not a String -->
+              <UInput
+                v-model.number="targetPrice"
+                type="number"
+                size="lg"
+                placeholder="e.g. 2500"
+                :disabled="isSubmitting"
+                required
+              />
+              <p class="text-xs text-muted mt-1">
+                We will email you when the price drops to or below this amount.
+              </p>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-6">
+              <UButton
+                color="neutral"
+                variant="soft"
+                @click="isModalOpen = false"
+              >
+                Cancel
+              </UButton>
+              <UButton
+                type="submit"
+                color="primary"
+                :loading="isSubmitting"
+              >
+                Save Tracker
+              </UButton>
+            </div>
+          </form>
+        </UCard>
       </template>
     </UModal>
-
   </div>
 </template>

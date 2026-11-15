@@ -18,4 +18,4 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 4000);
   console.log(`API running on ${process.env.PORT}`);
 }
-bootstrap();
+void bootstrap();

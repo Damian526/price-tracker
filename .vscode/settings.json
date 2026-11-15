@@ -1,10 +1,6 @@
 {
   "eslint.useFlatConfig": true,
-  "eslint.workingDirectories": [
-    { "directory": "apps/api", "changeProcessCWD": true },
-    { "directory": "apps/worker", "changeProcessCWD": true },
-    { "directory": "apps/web", "changeProcessCWD": true }
-  ],
+  "eslint.workingDirectories": [{ "mode": "auto" }],
   "eslint.validate": ["javascript", "typescript", "vue"],
   "[vue]": {
     "editor.defaultFormatter": "dbaeumer.vscode-eslint",

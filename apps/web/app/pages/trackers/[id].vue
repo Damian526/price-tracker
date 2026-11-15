@@ -13,13 +13,13 @@ const isCheckingNow = ref(false)
 const {
   data: tracker,
   pending: trackerPending,
-  refresh: refreshTracker,
+  refresh: refreshTracker
 } = useFetch<ITracker>(`${config.public.apiBase}/trackers/${trackerId}`)
 
 const {
   data: snapshots,
   pending: historyPending,
-  refresh: refreshHistory,
+  refresh: refreshHistory
 } = useFetch<IPriceSnapshot[]>(`${config.public.apiBase}/trackers/${trackerId}/history`)
 
 // 2. Computed Analytics: Calculate 30-Day Lowest and Highest prices automatically
@@ -38,13 +38,13 @@ const handleManualCheck = async () => {
   isCheckingNow.value = true
   try {
     await $fetch(`${config.public.apiBase}/trackers/${trackerId}/check`, {
-      method: 'POST',
+      method: 'POST'
     })
     toast.add({
       title: 'Scrape job queued!',
       description: 'Playwright is checking the store now. Refreshing in 6 seconds...',
       icon: 'i-heroicons-arrow-path',
-      color: 'primary',
+      color: 'info'
     })
 
     // Wait 6 seconds for Playwright to finish, then reload the chart and price!
@@ -52,11 +52,11 @@ const handleManualCheck = async () => {
       await Promise.all([refreshTracker(), refreshHistory()])
       isCheckingNow.value = false
     }, 6000)
-  } catch (err) {
+  } catch {
     toast.add({
       title: 'Could not trigger check',
-      color: 'primary',
-      icon: 'i-heroicons-exclamation-circle',
+      color: 'error',
+      icon: 'i-heroicons-exclamation-circle'
     })
     isCheckingNow.value = false
   }
@@ -69,7 +69,7 @@ const handleManualCheck = async () => {
     <div>
       <UButton
         to="/trackers"
-        color="gray"
+        color="neutral"
         variant="ghost"
         icon="i-heroicons-arrow-left"
       >
@@ -78,12 +78,21 @@ const handleManualCheck = async () => {
     </div>
 
     <!-- Loading State -->
-    <div v-if="trackerPending" class="flex justify-center py-12">
-      <UIcon name="i-heroicons-arrow-path" class="w-10 h-10 animate-spin text-primary" />
+    <div
+      v-if="trackerPending"
+      class="flex justify-center py-12"
+    >
+      <UIcon
+        name="i-heroicons-arrow-path"
+        class="w-10 h-10 animate-spin text-primary"
+      />
     </div>
 
     <!-- Main Detail Content -->
-    <div v-else-if="tracker" class="space-y-8">
+    <div
+      v-else-if="tracker"
+      class="space-y-8"
+    >
       <!-- Top Product Overview Card -->
       <UCard>
         <div class="flex flex-col md:flex-row gap-6 items-center">
@@ -96,21 +105,31 @@ const handleManualCheck = async () => {
               :src="tracker.imageUrl"
               :alt="tracker.title"
               class="max-h-full object-contain"
-            />
+            >
           </div>
 
           <!-- Title & Actions -->
           <div class="flex-1 space-y-3">
             <div class="flex items-center gap-2">
-              <UBadge color="gray" variant="soft">{{ tracker.store }}</UBadge>
-              <UBadge color="primary" variant="subtle">{{ tracker.lastStatus }}</UBadge>
+              <UBadge
+                color="neutral"
+                variant="soft"
+              >
+                {{ tracker.store }}
+              </UBadge>
+              <UBadge
+                :color="trackerStatusColor(tracker.lastStatus)"
+                variant="subtle"
+              >
+                {{ tracker.lastStatus }}
+              </UBadge>
             </div>
 
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 class="text-2xl font-bold text-highlighted">
               {{ tracker.title || 'Scraping product title...' }}
             </h1>
 
-            <p class="text-xs text-gray-400">
+            <p class="text-xs text-dimmed">
               Last checked:
               {{ tracker.lastCheckedAt ? new Date(tracker.lastCheckedAt).toLocaleString() : 'Pending first check' }}
             </p>
@@ -128,7 +147,7 @@ const handleManualCheck = async () => {
               <UButton
                 :to="tracker.url"
                 target="_blank"
-                color="gray"
+                color="neutral"
                 variant="soft"
                 icon="i-heroicons-arrow-top-right-on-square"
               >
@@ -142,29 +161,37 @@ const handleManualCheck = async () => {
       <!-- 4 Key Price Metric Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <UCard>
-          <p class="text-xs text-gray-500 uppercase font-bold">Current Price</p>
-          <p class="text-2xl font-extrabold text-gray-900 dark:text-white mt-1">
+          <p class="text-xs text-muted uppercase font-bold">
+            Current Price
+          </p>
+          <p class="text-2xl font-extrabold text-highlighted mt-1">
             {{ tracker.currentPrice ? `${tracker.currentPrice.toFixed(2)} ${tracker.currency}` : '---' }}
           </p>
         </UCard>
 
         <UCard>
-          <p class="text-xs text-gray-500 uppercase font-bold">Your Target Price</p>
+          <p class="text-xs text-muted uppercase font-bold">
+            Your Target Price
+          </p>
           <p class="text-2xl font-extrabold text-primary mt-1">
             {{ tracker.targetPrice.toFixed(2) }} {{ tracker.currency }}
           </p>
         </UCard>
 
         <UCard>
-          <p class="text-xs text-gray-500 uppercase font-bold">30-Day Lowest</p>
-          <p class="text-2xl font-extrabold text-green-500 mt-1">
+          <p class="text-xs text-muted uppercase font-bold">
+            30-Day Lowest
+          </p>
+          <p class="text-2xl font-extrabold text-success mt-1">
             {{ lowestPrice ? `${lowestPrice.toFixed(2)} ${tracker.currency}` : '---' }}
           </p>
         </UCard>
 
         <UCard>
-          <p class="text-xs text-gray-500 uppercase font-bold">30-Day Highest</p>
-          <p class="text-2xl font-extrabold text-gray-400 mt-1">
+          <p class="text-xs text-muted uppercase font-bold">
+            30-Day Highest
+          </p>
+          <p class="text-2xl font-extrabold text-muted mt-1">
             {{ highestPrice ? `${highestPrice.toFixed(2)} ${tracker.currency}` : '---' }}
           </p>
         </UCard>
@@ -174,17 +201,23 @@ const handleManualCheck = async () => {
       <UCard>
         <template #header>
           <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 class="text-lg font-semibold text-highlighted">
               30-Day Price History
             </h2>
-            <span class="text-xs text-gray-400">
+            <span class="text-xs text-dimmed">
               {{ snapshots?.length || 0 }} data points recorded
             </span>
           </div>
         </template>
 
-        <div v-if="historyPending" class="flex justify-center py-12">
-          <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-primary" />
+        <div
+          v-if="historyPending"
+          class="flex justify-center py-12"
+        >
+          <UIcon
+            name="i-heroicons-arrow-path"
+            class="w-8 h-8 animate-spin text-primary"
+          />
         </div>
         <PriceChart
           v-else
