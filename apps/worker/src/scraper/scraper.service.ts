@@ -13,6 +13,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { MailService } from 'src/mail/mail.service';
 import { ConfigService } from '@nestjs/config';
 import { Browser, chromium } from 'playwright';
+import { ParserRegistry } from 'src/parsers/parser.registry';
+import { ISearchResultItem } from '@price-tracker/shared';
 
 @Injectable()
 export class ScraperService {
@@ -26,6 +28,7 @@ export class ScraperService {
     private readonly snapshotModel: Model<PriceSnapshotDocument>,
     @InjectModel(SearchSession.name)
     private readonly searchSessionModel: Model<SearchSessionDocument>,
+    private readonly parserRegistry: ParserRegistry,
     private readonly mailService: MailService,
     private configService: ConfigService,
   ) {}
@@ -46,6 +49,7 @@ export class ScraperService {
     let browser: Browser | null = null;
 
     try {
+      const parser = this.parserRegistry.getParserForUrl(tracker.url);
       this.logger.log(
         `Launching headless browser for tracker ${trackerId} (${tracker.url})`,
       );
@@ -67,11 +71,7 @@ export class ScraperService {
       });
 
       // Extract data
-      const {
-        price: scrapedPrice,
-        title,
-        imageUrl,
-      } = await this.xkomParser.parse(page);
+      const { price: scrapedPrice, title, imageUrl } = await parser.parse(page);
 
       if (
         scrapedPrice === null ||
@@ -170,34 +170,50 @@ export class ScraperService {
         userAgent:
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
       });
-      const page = await context.newPage();
+      const aggregatedResults: ISearchResultItem[] = [];
+      const parsers = this.parserRegistry.getAllParsers();
+      for (const parser of parsers) {
+        const page = await context.newPage();
+        try {
+          // 2. Build the search URL and navigate
+          const searchUrl = this.xkomParser.getSearchUrl(query);
+          await page.goto(searchUrl, {
+            waitUntil: 'domcontentloaded',
+            timeout: 30000,
+          });
 
-      // 2. Build the search URL and navigate
-      const searchUrl = this.xkomParser.getSearchUrl(query);
-      await page.goto(searchUrl, {
-        waitUntil: 'domcontentloaded',
-        timeout: 30000,
-      });
+          // 3. Extract the top 3 results using your parser
+          const storeResults = await parser.parseSearchResults(page, 3);
+          for (const result of storeResults)
+            aggregatedResults.push({
+              ...result,
+              store: parser.storeName,
+            });
+        } catch (storeError) {
+          const msg =
+            storeError instanceof Error ? storeError.message : 'Unknown error';
+          this.logger.warn(
+            `⚠️ Store ${parser.storeName} failed during search "${query}": ${msg}`,
+          );
+        } finally {
+          // Close the tab immediately so RAM is freed before the next store loads
+          await page.close();
+        }
+      }
 
-      // 3. Extract the top 3 results using your parser
-      const searchResults = await this.xkomParser.parseSearchResults(page, 3);
-
-      // Add the store name to the results (since the shared interface expects it)
-      const formattedResults = searchResults.map((result) => ({
-        ...result,
-        store: 'x-kom.pl',
-      }));
+      // sort all results from cheapest to most expensive
+      aggregatedResults.sort((a, b) => a.price - b.price);
 
       // 4. Save results to MongoDB and mark session completed
       await this.searchSessionModel.findByIdAndUpdate(sessionId, {
         $set: {
           status: 'completed',
-          results: formattedResults,
+          results: aggregatedResults,
         },
       });
 
       this.logger.log(
-        `✅ Search session ${sessionId} completed with ${formattedResults.length} results.`,
+        `✅ Search session ${sessionId} completed with ${aggregatedResults.length} results.`,
       );
     } catch (error) {
       const errMessage =

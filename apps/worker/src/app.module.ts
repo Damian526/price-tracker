@@ -12,6 +12,7 @@ import {
 } from '@price-tracker/database';
 import { ScraperService } from './scraper/scraper.service';
 import { MailService } from './mail/mail.service';
+import { ParserRegistry } from './parsers/parser.registry';
 
 @Module({
   imports: [
@@ -31,6 +32,6 @@ import { MailService } from './mail/mail.service';
     ]),
   ],
   controllers: [ScraperController],
-  providers: [ScraperService, MailService],
+  providers: [ScraperService, MailService, ParserRegistry],
 })
 export class AppModule {}
