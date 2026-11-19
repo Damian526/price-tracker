@@ -12,6 +12,8 @@ export interface SearchResult {
 }
 
 export class XkomParser implements StoreParser {
+  readonly storeName = 'x-kom.pl';
+
   matches(url: string): boolean {
     return url.includes('x-kom.pl');
   }
